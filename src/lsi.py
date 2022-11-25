@@ -20,11 +20,14 @@ class LSI: #IRM
         self.tf_idf = [] #matriz tf x idf = w_ij
 
         self.query_vector = self.get_query_vector()
-        self.matrix_term_doc = self.create_matrix_term_document( binary, tfidf)
+        self.matrix_term_doc = []
+        self.matrix_term_doc = self.create_matrix_term_document( binary )
+        self.is_tf_idf(tfidf)
+        self.save_matrix(binary, tfidf)
 
 
    #matriz term-document que representa la frecuencia de los terminos en los documentos
-    def create_matrix_term_document(self, binary = False, tfidf=False):
+    def create_matrix_term_document(self, binary ):
         term_vector = []
         m_term_doc = []
 
@@ -35,15 +38,8 @@ class LSI: #IRM
                         term_vector.append(1)
                     else:
                         term_vector.append(0)
-
-            m_term_doc.append(term_vector.copy())
-            term_vector.clear()
-
-        elif tfidf:
-            self.__calculate_tf()
-            self.__calculate_idf(len(self.collection)) # mandar el total de documentos
-            self.__calculate_tf_idf()
-            m_term_doc = self.tf_idf.copy()
+                m_term_doc.append(term_vector.copy())
+                term_vector.clear()
 
         #usar la matriz term-doc de frequencia por defecto
         else:
@@ -55,20 +51,27 @@ class LSI: #IRM
                 m_term_doc.append(term_vector.copy())
                 term_vector.clear()
         
-        self.save_matrix(m_term_doc, binary, tfidf)
         return m_term_doc
 
+    #Si se quiere calcular la similitud de la matriz de los pesos esta se crea
+    def is_tf_idf(self, tfidf):
+        if tfidf:
+                self.__calculate_tf()
+                self.__calculate_idf(len(self.collection)) # mandar el total de documentos
+                self.__calculate_tf_idf()
+                m_term_doc = self.tf_idf.copy()
+
     #serializacion de las matrices
-    def save_matrix(self, M, binary = False, tfidf=False):
+    def save_matrix(self, binary = False, tfidf=False):
         if binary:
             with open("binary_matrix","wb") as binary_file: # wb = escritura binaria
-                pickle.dump(M, binary_file)
+                pickle.dump(self.matrix_term_doc, binary_file)
         elif tfidf:
             with open("tfidf_matrix","wb") as tfidf_file:
-                pickle.dump(M, tfidf_file)
+                pickle.dump(self.matrix_term_doc, tfidf_file)
         else:
             with open("frequency_matrix","wb") as freq_file: 
-                pickle.dump(M, freq_file)
+                pickle.dump(self.matrix_term_doc, freq_file)
 
     # deserializacion de las matrices
     def get_matrix(self, binary = False, tfidf=False):
@@ -88,9 +91,10 @@ class LSI: #IRM
     def __calculate_tf(self):
         tf_vector = []
         max_freq = self.__select_max() 
-        for term_vector in matrix_term_doc:
-            for i, freq_d in enumerate(term_vector):
+        for doc_vector in self.matrix_term_doc:
+            for i, freq_d in enumerate(doc_vector):
                 value = freq_d / float(max_freq[i])
+                value = np.round(value, 4)
                 tf_vector.append(value)
             self.tf_ij.append( tf_vector.copy())
             tf_vector.clear()
@@ -99,7 +103,7 @@ class LSI: #IRM
     def __select_max(self):
         result = [] #len(result) = cantidad de documentos
         for doc_vector in self.matrix_term_doc:
-            if len(result) == 0: result = doc_vector
+            if len(result) == 0: result = doc_vector.copy()
             else:
                 for i in range(len(doc_vector)):
                     if result[i] < doc_vector[i]:
@@ -113,27 +117,30 @@ class LSI: #IRM
         idf_vector=[]
         n_i = 0
         
-        for term, term_vector in indexed_terms.items():
-            for d in term_vector:
+        for doc_vector in self.matrix_term_doc:
+            for d in doc_vector:
                 if d > 0:
                     n_i += 1
-            idf = math.log( N / float( n_i))
+            idf = math.log( N / float( n_i),10)
+            idf = np.round(idf, 4)
             idf_vector.append(idf)
             idf_vector.append(n_i)
             self.idf_i.append( idf_vector.copy())
             idf_vector.clear()
+            n_i = 0
         
 
     def __calculate_tf_idf(self):
         tfidf_vector = []
         
-        for term, term_vector in tf_ij.items():
-            idf_value = self.idf_i.get(item)[0] #tomar el idf correspondiente al termino i
-            for d in term_vector:
+        for index, doc_vector in enumerate(self.tf_ij):
+            idf_value = self.idf_i[index][0] #tomar el idf correspondiente al termino i
+            for d in doc_vector:
                 n = idf_value * d
                 tfidf_vector.append(n)
             self.tf_idf.append(tfidf_vector.copy())
             tfidf_vector.clear()
+        self.matrix_term_doc = self.tf_idf.copy()
     
     #crear el vector consulta con las frecuencias q tiene en cada documento
     def get_query_vector(self):
@@ -207,6 +214,6 @@ class LSI: #IRM
 collections = ["leon leon leon", "leon leon leon zorro", "leon zorro nutria","leon leon leon zorro zorro zorro", "nutria"]
 query = "nutria"
 terms = ["leon","zorro","nutria"]
-lsi = LSI(collections,terms,query)
+lsi = LSI(collections,terms,query,False,True)
 ranking = lsi.calculate_ranking()
 print(ranking)
