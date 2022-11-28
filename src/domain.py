@@ -7,19 +7,19 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re
 import numpy as np
+import time
 
-DIR = "C:\\Users\\Marie\\Desktop\\New folder\\New folder"
+DIR = "C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\20 Newsgroups\\20news-18828"
 
 class Document:
     
-    def __init__(self,id, title, author, body):
-        self.id = id
-        self.title = title
-        self.author= author
-        self.body = body
+    def __init__(self, id, body):
+        self.id=id
+        self.body=body
 
+    
     def __repr__(self):
-        return f"Title: {self.title}\n"
+        return f"ID: {self.id}\n"
 
 
 class Collection(ABC):
@@ -51,7 +51,11 @@ class BooleanIRM:
         self.terms = terms
         self.query = query
         self.indexed_terms = {}
+        start = time.time()
+        print("start indexing terms")
         self.indexing_terms()
+        end = time.time()
+        print(f"end indexing terms {end-start}")
    
 
     def indexing_terms(self):
@@ -159,8 +163,11 @@ class BooleanIRM:
         return result_set
 
     def retrieve_documents(self):
-
+        start = time.time()
+        print("start processing query")
         vector = self.process_query()
+        end = time.time()
+        print(f"end processing query {end-start}")
         relevant_documents = []
 
         for i in range(len(vector)):
@@ -177,25 +184,74 @@ class Newsgroups(Collection):
 
     def parse(self):
         documents=[]
-        terms = set([])
+        indexed_terms = {}
         count = 0
-        
+        start = time.time()
+        current_doc = None
+
         for file in os.scandir(self.directory):
-            for subfile in os.scandir(file):
+            for subfile in os.scandir(file):                                  
+                current_doc = Document(count,f"File: {file} Subfile: {subfile}")
                 with open(subfile) as sf:
-                    author = sf.readline()
-                    title = sf.readline()
-                    text = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', sf.read().lower())))
-
-                    documents.append(Document(count,title[9:], author[6:], text))
-                    terms = terms | set(text)
-                    count+=1
-
-        return documents, list(terms)
+                    while True:
+                        line = sf.readline()                                 
+                        if not line:
+                            documents.append(current_doc)
+                            break
+                        line = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
+                        for term in line:                                  
+                            vector = indexed_terms.get(term)
+                            if vector == None:
+                                vector = [0 for i in range(1400)]
+                            vector[count-1]=vector[count-1] + 1
+                            indexed_terms.update({term:vector})
+        end = time.time()
+        print(f'end parse {end-start}')
+        return documents, list(indexed_terms)
 
     def remove_stopwords(self,document):
         return super().remove_stopwords(document)
  
+class Cranfield(Collection):
+
+    def __init__(self, directory):
+        super().__init__(directory)
+
+    def parse(self):
+        indexed_terms={}
+        documents=[]
+        count = 0
+        current_doc = None
+        
+        with open(self.directory,'r') as f:            
+            while True:
+                line = f.readline()
+                if not line:                    
+                    documents.append(current_doc)
+                    break
+                if line.startswith(".I"):
+                    if current_doc != None:
+                        documents.append(current_doc)                    
+                    current_doc = Document(count + 1, "")
+                    count = count + 1
+                current_doc.body = current_doc.body + line
+                line = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
+                for term in line:                                  
+                    vector = indexed_terms.get(term)
+                    if vector == None:
+                        vector = [0 for i in range(1400)]
+                    vector[count-1]=vector[count-1] + 1
+                    indexed_terms.update({term:vector})
+
+            return indexed_terms, documents
+   
+
+                   
+
+                
+
+
+        
 
 def start(collection, irm, query):
 
@@ -214,17 +270,30 @@ def start(collection, irm, query):
 
        
 
-print("Write a query: ")
-query=input()
-start('newsgroup','boolean', query)
+#print("Write a query: ")
+#query=input()
+#start('newsgroup','boolean', query)
 
 
+dic ={'key':'value'}
+print(dic.get('key'))
+v = dic.get('key')
+v = 'hola'
+dic.update({'key':v})
+print(dic.get('key'))
+dic.update({'l':'m'})
+print(len(dic))
+print(v.count)
+start=time.time()
+c = Cranfield("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\cran\\cran.all.1400")  
+#c=Cranfield("C:\\Users\\Marie\\Desktop\\New folder\\New Text Document.txt")
+#for d in os.scandir("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\cran"):
+#    print(d)
+a,b=c.parse()
+print(b)
+end = time.time()
+print(end-start)
 
-
-
-
-    
-        
 
     
 
