@@ -179,9 +179,6 @@ class BooleanIRM:
 
 class Newsgroups(Collection):
 
-    def __init__(self, directory):
-        super().__init__(directory)       
-
     def parse(self):
         documents=[]
         indexed_terms = {}
@@ -209,8 +206,6 @@ class Newsgroups(Collection):
         print(f'end parse {end-start}')
         return documents, list(indexed_terms)
 
-    def remove_stopwords(self,document):
-        return super().remove_stopwords(document)
  
 class Cranfield(Collection):
 
