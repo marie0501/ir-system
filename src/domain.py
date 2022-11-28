@@ -183,7 +183,6 @@ class Newsgroups(Collection):
         documents=[]
         indexed_terms = {}
         count = 0
-        start = time.time()
         current_doc = None
 
         for file in os.scandir(self.directory):
@@ -191,20 +190,21 @@ class Newsgroups(Collection):
                 current_doc = Document(count,f"File: {file} Subfile: {subfile}")
                 with open(subfile) as sf:
                     while True:
-                        line = sf.readline()                                 
+                        line = sf.readline()                                                       
                         if not line:
                             documents.append(current_doc)
+                            count = count + 1
+                            print(count)
                             break
                         line = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
                         for term in line:                                  
                             vector = indexed_terms.get(term)
                             if vector == None:
-                                vector = [0 for i in range(1400)]
+                                vector = [0 for i in range(18828)]
                             vector[count-1]=vector[count-1] + 1
                             indexed_terms.update({term:vector})
-        end = time.time()
-        print(f'end parse {end-start}')
-        return documents, list(indexed_terms)
+        
+        return documents, indexed_terms
 
  
 class Cranfield(Collection):
@@ -277,12 +277,14 @@ dic.update({'l':'m'})
 print(len(dic))
 print(v.count)
 start=time.time()
-c = Cranfield("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\cran\\cran.all.1400")  
+#c = Cranfield("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\cran\\cran.all.1400")  
 #c=Cranfield("C:\\Users\\Marie\\Desktop\\New folder\\New Text Document.txt")
 #for d in os.scandir("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\cran"):
 #    print(d)
-a,b=c.parse()
-print(b)
+#a,b=c.parse()
+n = Newsgroups("C:\\Users\\Marie\\Documents\\3er\\S2\\SRI\\Test Collections\\20 Newsgroups\\20news-18828")
+d,c=n.parse()
+print(d)
 end = time.time()
 print(end-start)
 
