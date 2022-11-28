@@ -209,9 +209,6 @@ class Newsgroups(Collection):
  
 class Cranfield(Collection):
 
-    def __init__(self, directory):
-        super().__init__(directory)
-
     def parse(self):
         indexed_terms={}
         documents=[]
