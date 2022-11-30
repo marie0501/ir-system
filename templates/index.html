@@ -1,24 +1,89 @@
+{% extends 'base.html' %}
 {% load static %}
 
-<!doctype html>
-<html lang="en">
-  <head>   
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"> 
-    <title>Bootstrap demo</title>
-    <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-  </head>
-  <body>
-    <h1>Browser's Name</h1>
-    <div class="input-group mb-3">
-      <input type="text" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="button-addon2">
-      <button class="btn btn-outline-secondary" type="button" id="button-addon2">Button</button>
-    </div>
+    {% block content %}
+      <div class="container-fluid">
+        <div class="row justify-content-start">
+          <div class="col-6 col-md-1" >
+            <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#exampleModal" style="border-color: white; background-color: white; " ><i class="fa fa-cog" aria-hidden="true"></i></button>
+          </div>              
+        </div>
+      </div>
+      <div class="container text-center">        
+         <div class="row">        
+          <div class="col align-self-center" style="margin-top: 150pt;">
+            <h1>Browser's Name</h1>            
+            <div class="input-group mb-3">
+              <input class="form-control form-control-lg" type="text" placeholder="Search" aria-label=".form-control-lg example">                   
+              <button class="btn btn-outline-secondary" type="submit" onclick="location.href = 'results.html';" id="button-search"><i class="fa fa-search"></i></button>                                                               
+            </div>            
+          </div>        
+        </div>
+      </div>
 
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}" ></script> 
-    <script src="{% static 'js/bootstrap.bundle.js' %}" ></script>
-    <script src="{% static 'js/bootstrap.min.js' %}" ></script>
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Setting</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form>
+                <h3>Choose Collection:</h3>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked>
+                  <label class="form-check-label" for="flexRadioDefault1">
+                    Cranfield
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
+                  <label class="form-check-label" for="flexRadioDefault2">
+                    Newsgroup
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault3">
+                  <label class="form-check-label" for="flexRadioDefault3">
+                    Reuters
+                  </label>
+                </div>
 
-  </body>
-</html>
+              </form>
+              
+              <form>
+                  <h3>Choose IRM:</h3>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault4" checked>
+                  <label class="form-check-label" for="flexRadioDefault4">
+                    Boolean
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault5">
+                  <label class="form-check-label" for="flexRadioDefault5">
+                    Vectorial
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault6">
+                  <label class="form-check-label" for="flexRadioDefault6">
+                    LSI
+                  </label>
+                </div>
+              </form>
+            </div>
+              
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+
+    {% endblock %}   
+   

@@ -171,7 +171,7 @@ class LSI: #IRM
     #devuelve el valor k<r, q representa la nueva dimension de las matrices
     #k:cantidad de conceptos < r total de documentos
     def __dimension_reduction(self):
-        k = [ 100, 200, 300]
+        k = [100, 200, 300]
         r = random.randint(0, 2)
         return k[r] # k = entre 100 y 300
 

@@ -2,96 +2,123 @@ import glob
 import nltk
 from nltk.corpus import stopwords
 from nltk import word_tokenize
+from nltk import stopwords
 import string
 from collections import Counter
 import numpy as np
 from collections import OrderedDict
+from .irm import IRM
+import re
 
-#NOTA: Creo que este metodo lo tienen de alguna manera en el modelo booleano
-# Input: Diccionario de documentos
-# Output: Se eliminan las palabras vacías, signos de puntuación y se devuelven todas las palabras
-# de la collección en una lista
-def wordList(doc_dict):
-    stop = stopwords.words('english') + list(string.punctuation) + ['\n']
-    wordList = []
-    for doc in doc_dict.values():
-        for word in word_tokenize(doc.lower().strip()): 
-            if not word in stop:
-                wordList.append(word)
-    return wordList
 
-#Input: Vocabulario de las palabras y diccionario de documentos
-#Output: Diccionario de diccionarios que relaciona en cada documetnto, cada palabra con su tf
-def tF_Doc(vocab, doc_dict):
-    tf_docs = {}
-    for doc_id in doc_dict.keys():
-        tf_docs[doc_id] = {}
+class Vectorial(IRM):
+
+    def search(self, query, collection, indexed_terms, max_freq):
+
+        term_document_matrix = self.__create_term_document_matrix(indexed_terms, max_freq)
+        query_vector = self.__process_query(query, term_document_matrix)
+        relevant_documents = self.__similarity(term_document_matrix, query_vector)
+
+        return collection.retrieve_documents(relevant_documents)
+
+    def __create_term_document_matrix(self, indexed_terms, max_freq):
+
+        tf_matrix = self.__create_tf_matrix(indexed_terms, max_freq)
+        idf_matrix = self.__create_idf_matrix(indexed_terms, len(max_freq))
+        tf_idf_matrix = self.__create_tf_idf_matrix(tf_matrix, idf_matrix)
+
+        return tf_idf_matrix
+        
+    def __create_tf_matrix(self, indexed_terms, max_freq):
+
+        tf_matrix = []
+        for key in indexed_terms.keys:
+            current_vector = indexed_terms[key]
+            for i in range(len(max_freq)):
+                current_vector[i]= current_vector[i] / max_freq[i]
+            tf_matrix.append(current_vector)
+
+        return tf_matrix                
+
+
+    def __create_idf_matrix(self, indexed_terms, N):
+
+        idf_matrix = []
+        for key in indexed_terms.keys:
+            if indexed_terms[key][N]!=0:
+                idf_matrix.append(np.log10(N/indexed_terms[key][N]))
+
+        return idf_matrix
+
+    def __create_tf_idf_matrix(self, tf_matrix, idf_matrix):
+
+        tf_idf_matrix = []
+        for i in range(len(idf_matrix)):
+            for j in range(len(tf_matrix)):
+                tf_idf_matrix = tf_matrix[i][j]*idf_matrix[i]
+
+        return tf_idf_matrix
+
+    def __process_query(self, query, indexed_terms, idf_matrix, a):
+
+        query_tokenized = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', query)))
+        query_terms = {}
+        max_freq = 0
+        query_vector = []
+        i=0
+
+        for term in query:
+            current_value = 0
+            if term in query_terms.keys():
+                current_value = query_terms[term]
+            query_terms.update({term:current_value})
+            if current_value > max_freq:
+                max_freq = current_value
+
+        for term in indexed_terms.keys():
+            if term in query_terms.keys():
+                query_vector.append((a + (a*query_terms[term])/max_freq)*idf_matrix[i])
+            else:
+                query_vector.append(a * idf_matrix[i])
+            i+=1
+
+        return query_vector
+
+
+    def __similarity(self, term_document_matrix, query_vector):
+
+        sim = {}
+        sim_current_doc = 0
+
+        for i in range(term_document_matrix.shape[1]):
+            for j in range(term_document_matrix.shape[0]):
+                sim_current_doc += (term_document_matrix[j][i]*query_vector[j])/(np.sq(term_document_matrix[j][i]**2)*(np.sq(query_vector[j]**2)))
+            if sim_current_doc > 0.3:
+                sim.update({i:sim_current_doc})
+
+        return sorted(sim.items(), key=lambda x: x[1], reverse=True)
+
     
-    for word in vocab:
-        for doc_id,doc in doc_dict.items():
-            tf_docs[doc_id][word] = doc.count(word)
-    return tf_docs
 
-#Input: Vocabulario de las palabras y el dicionario de documentos
-#Output: Diccionario donde cada palabra se relaciona con su frecuencia
-def wordDocFrecuency(vocabulary, doc_dictionary):
-    df = {}
-    for word in vocabulary:
-        freq = 0
-        for doc in doc_dictionary.values():
-            if word in word_tokenize(doc.lower().strip()):
-                freq = freq + 1
-        df[word] = freq
-    return df
+            
 
-#Input: Vocabulario, diccionario de frecuencia de documetnos y cantidad de documentos
-#Output: diccionario con idf del documento
-def inverseDocFrecuency(vocabulary,doc_frecuency,length):
-    idf= {} 
-    for word in vocabulary:     
-        idf[word] = np.log2((length+1) / doc_frecuency[word])
-    return idf
-#Input:
-# Vocabulario
-# tf
-# idf
-# documentos
-#Output: diccionario con el valor de tf*idf asociado a cada palabra
-def tf_idf(vocabulary,tf,idf_scr,doc_dictionary):
-    tf_idf_scr = {}
-    for doc_id in doc_dictionary.keys():
-        tf_idf_scr[doc_id] = {}
-    for word in vocabulary:
-        for doc_id,doc in doc_dictionary.items():
-            tf_idf_scr[doc_id][word] = tf[doc_id][word] * idf_scr[word]
-    return tf_idf_scr
+                
 
-#Input: Consulta, dicccionario de documentos y diccionario de tf*idf 
-def vectorSpaceModel(query, doc_dict,tf_idf_scr):
-    query_vocab = []
-    for word in query.split():
-        if word not in query_vocab:
-            query_vocab.append(word)
+        
 
-    query_wc = {}
-    for word in query_vocab:
-        query_wc[word] = query.lower().split().count(word)
-    
-    relevance_scores = {}
-    for doc_id in doc_dict.keys():
-        score = 0
-        for word in query_vocab:
-            score += query_wc[word] * tf_idf_scr[doc_id][word]
-        relevance_scores[doc_id] = score
-    sorted_value = OrderedDict(sorted(relevance_scores.items(), key=lambda x: x[1], reverse = True))
-    top_5 = {k: sorted_value[k] for k in list(sorted_value)[:5]}
-    return top_5
 
-#Debemos unirlo al primer .py o separar el analisis de los documentos para usarlo
-#    w_List = wordList(docs)           #returns a list of tokenized words
-#    vocab = list(set(w_List))         #returns a list of unique words
-#    tf_dict = tF_Doc(vocab, docs)     #returns term frequency
-#    df_dict = wordDocFrecuency(vocab, docs)             #returns document frequencies
-#    idf_dict = inverseDocFrecuency(vocab,df_dict,M)     #returns idf scores
-#    _tf_idf = tf_idf(vocab,tf_dict,idf_dict,docs)   #returns tf-idf socres
-   
+
+
+            
+
+
+        
+
+
+
+
+        
+
+
+
+
