@@ -2,8 +2,9 @@ import re, math
 import numpy as np
 import pickle
 import random
+from .vectorial_model import Vectorial
 
-class LSI: #IRM
+class LSI(Vectorial): #IRM
     
     # Crear una matriz term-documento con 3 pesos diferentes:
     #1- Los pesos binarios
@@ -24,6 +25,8 @@ class LSI: #IRM
         self.matrix_term_doc = self.create_matrix_term_document( binary )
         self.is_tf_idf(tfidf)
         self.save_matrix(binary, tfidf)
+
+    
 
 
    #matriz term-document que representa la frecuencia de los terminos en los documentos

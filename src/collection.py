@@ -1,21 +1,29 @@
 from abc import ABC, abstractmethod
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import os
 import re
-from .document import Document
+import pickle
+import time
+from src.document import Document
+
+# TODO methods: remove_stopwords, save, load
 
 class Collection(ABC):
 
     def __init__(self, directory):
-        self.directory = directory   
+        self.directory = directory 
+        self.save_all = False  
     
     @abstractmethod
     def parse(self):
         pass
+    
+    @abstractmethod
+    def retrieve_documents(self, documents):
+        pass
 
-    def __remove_stopwords(self,document):
+    def _remove_stopwords(self, document):
         filtered_list = []
         stop_words = set(stopwords.words("english"))
         for word in document:
@@ -24,11 +32,18 @@ class Collection(ABC):
 
         return filtered_list
 
-    @abstractmethod
-    def retrieve_documents(self):
-        pass
+    def _save(self, file, name):
+         with open(name,'wb') as f:
+            pickle.dump(file, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _load(self,name):
+        with open(name,'rb') as f:
+            return pickle.load(f)
 
 class Newsgroups(Collection):
+
+    def __init__(self, directory):
+        super().__init__(directory)
 
     def parse(self):
         documents=[]
@@ -47,7 +62,7 @@ class Newsgroups(Collection):
                             count = count + 1
                             print(count)
                             break
-                        line = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
+                        line = self.__remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
                         for term in line:                                  
                             vector = indexed_terms.get(term)
                             if vector == None:
@@ -58,6 +73,9 @@ class Newsgroups(Collection):
         return documents, indexed_terms
 
 class Cranfield(Collection):
+
+    def __init__(self, directory):
+        super().__init__(directory)
 
     def parse(self):
         indexed_terms={}
@@ -78,16 +96,51 @@ class Cranfield(Collection):
                     current_doc = Document(count + 1, "")
                     count = count + 1
                 current_doc.body = current_doc.body + line
-                line = self.remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
+                line = self._remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', line)))
                 for term in line:                                  
                     vector = indexed_terms.get(term)
                     if vector == None:
                         vector = [0 for i in range(1401)]
                     elif vector[count-1]==0:
+                        # last position has the total of documentes term appears
                         vector[1400]=vector[1400]+1
                     vector[count-1]=vector[count-1] + 1
                     if vector[count-1] > max_freq[count-1]:
                         max_freq[count-1] = vector[count-1]
                     indexed_terms.update({term:vector})
 
-        return indexed_terms, documents, max_freq
+        self._save(indexed_terms,'cranfield_indexed_terms')
+        self._save(documents,'cranfield_documents')
+        self._save(max_freq,'cranfield_max_freq')
+
+        self.save_all = True
+
+        return indexed_terms, max_freq
+    
+
+    def retrieve_documents(self, relevant_documents):
+        
+        documents = self._load('cranfield_documents')
+        retrieved_documents = set()
+        
+        for (d,s) in relevant_documents:
+            retrieved_documents.add(documents[d])            
+
+        return retrieved_documents
+    
+   
+
+   
+
+
+
+
+
+
+
+
+    
+
+
+        
+        
