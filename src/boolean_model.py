@@ -132,7 +132,7 @@ class Boolean(IRM):
 
         return vector_result
 
-    def __get_relevant_documents(cf_vectors):
+    def __get_relevant_documents(self, cf_vectors):
 
         retrieved_documents = {}
         

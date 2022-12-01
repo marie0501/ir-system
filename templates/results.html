@@ -8,22 +8,27 @@
         <label for="browser" class="col-md col-form-label" >Browser's Name</label>
       </div>
       <div class="col-md-8">
-        <div class="input-group mb-3">
-          <input class="form-control form-control-md" type="text" placeholder="Search" aria-label=".form-control-lg example">                   
-          <button class="btn btn-outline-secondary" type="submit" onclick="location.href = 'results.html';" id="button-addon2"><i class="fa fa-search"></i></button>                    
-        </div>
+        <form class="needs-validation" novalidate method="POST" action=""> 
+          {% csrf_token %} 
+          <div class="input-group mb-3">
+            <input class="form-control form-control-md" type="text" placeholder="Search" aria-label=".form-control-lg example">                   
+            <button class="btn btn-outline-secondary" type="submit" onclick="location.href = 'results.html';"><i class="fa fa-search"></i></button>                    
+          </div>
+        </form>
       </div>
     </div>      
          
     <div class="list-group">
+      {%for document in documents%}
         <a href="#" class="list-group-item list-group-item-action">
           <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">List group item heading</h5>
+            <h5 class="mb-1">{{document.id}}</h5>
             <small>3 days ago</small>
           </div>
           <p class="mb-1">Some placeholder content in a paragraph.</p>
           <small>And some small print.</small>
         </a>
+        {% endfor %}
         <a href="#" class="list-group-item list-group-item-action">
           <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">List group item heading</h5>

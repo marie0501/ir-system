@@ -102,7 +102,7 @@ class Cranfield(Collection):
                     if vector == None:
                         vector = [0 for i in range(1401)]
                     elif vector[count-1]==0:
-                        # last position has the total of documentes term appears
+                        # last position has the total of documents the term appears
                         vector[1400]=vector[1400]+1
                     vector[count-1]=vector[count-1] + 1
                     if vector[count-1] > max_freq[count-1]:
@@ -122,9 +122,9 @@ class Cranfield(Collection):
         
         documents = self._load('cranfield_documents')
         retrieved_documents = set()
-        
-        for (d,s) in relevant_documents:
-            retrieved_documents.add(documents[d])            
+        print(len(documents))
+        for key in relevant_documents.keys():
+            retrieved_documents.add(documents[key-1])            
 
         return retrieved_documents
     

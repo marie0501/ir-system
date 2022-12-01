@@ -3,8 +3,8 @@
 
     {% block content %}
       <div class="container-fluid">
-        <div class="row justify-content-start">
-          <div class="col-6 col-md-1" >
+        <div class="row justify-content-end">
+          <div class="col-12 col-md-1">
             <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#exampleModal" style="border-color: white; background-color: white; " ><i class="fa fa-cog" aria-hidden="true"></i></button>
           </div>              
         </div>
@@ -12,11 +12,13 @@
       <div class="container text-center">        
          <div class="row">        
           <div class="col align-self-center" style="margin-top: 150pt;">
-            <h1>Browser's Name</h1>            
-            <div class="input-group mb-3">
-              <input class="form-control form-control-lg" type="text" placeholder="Search" aria-label=".form-control-lg example">                   
-              <button class="btn btn-outline-secondary" type="submit" onclick="location.href = 'results.html';" id="button-search"><i class="fa fa-search"></i></button>                                                               
-            </div>            
+            <h1>Browser's Name</h1>  
+      <form class="needs-validation" novalidate method="POST" action="" id="demoform"> 
+              {% csrf_token %}        
+              <div class="input-group mb-3">
+                <input class="form-control form-control-lg" type="text" placeholder="Search" aria-label=".form-control-lg example" name="query">                   
+                <button class="btn btn-outline-secondary" type="submit" id="button-search"><i class="fa fa-search"></i></button>                                                               
+              </div>                      
           </div>        
         </div>
       </div>
@@ -32,42 +34,39 @@
               <form>
                 <h3>Choose Collection:</h3>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked>
+                  <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault1" value="cranfield" checked>
                   <label class="form-check-label" for="flexRadioDefault1">
                     Cranfield
                   </label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
+                  <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault2" value="newsgroup">
                   <label class="form-check-label" for="flexRadioDefault2">
                     Newsgroup
                   </label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault3">
+                  <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault3" value="reuters">
                   <label class="form-check-label" for="flexRadioDefault3">
                     Reuters
                   </label>
                 </div>
 
-              </form>
-              
-              <form>
-                  <h3>Choose IRM:</h3>
+                <h3>Choose IRM:</h3>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault4" checked>
+                  <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault4" value="boolean" checked>
                   <label class="form-check-label" for="flexRadioDefault4">
                     Boolean
                   </label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault5">
+                  <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault5" value="vectorial">
                   <label class="form-check-label" for="flexRadioDefault5">
                     Vectorial
                   </label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault6">
+                  <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault6" value="lsi">
                   <label class="form-check-label" for="flexRadioDefault6">
                     LSI
                   </label>
@@ -76,13 +75,12 @@
             </div>
               
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save</button>              
             </div>
           </div>
         </div>
       </div>
-
+    </form>
       
 
     {% endblock %}   

@@ -4,5 +4,5 @@ from . import views
 
 urlpatterns=[
     path('', views.index, name = 'index'),
-    path('results.html', views.results, name='results')
+    path('results/<slug:documents_file>/', views.results, name='results')
 ]

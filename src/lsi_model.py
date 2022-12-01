@@ -1,189 +1,34 @@
-import re, math
 import numpy as np
-import pickle
 import random
 from .vectorial_model import Vectorial
+from scipy.sparse.linalg import svds
 
-class LSI(Vectorial): #IRM
+
+class LSI(Vectorial):    
     
-    # Crear una matriz term-documento con 3 pesos diferentes:
-    #1- Los pesos binarios
-    #2- Frecuencia de los pesos
-    #3- Con los valores de tf_idf
-    def __init__(self, collection, terms, query, binary = False, tfidf=False):
-        #super().__init__(collection, terms, query) #la lista de term estan todos los terminos unicos 
-        self.collection = collection
-        self.terms = terms
-        self.query = query
-        # de todos los documentos ordenados alfabeticamente
-        self.tf_ij = [] #matriz tf
-        self.idf_i = [] #matriz idf
-        self.tf_idf = [] #matriz tf x idf = w_ij
-
-        self.query_vector = self.get_query_vector()
-        self.matrix_term_doc = []
-        self.matrix_term_doc = self.create_matrix_term_document( binary )
-        self.is_tf_idf(tfidf)
-        self.save_matrix(binary, tfidf)
-
-    
-
-
-   #matriz term-document que representa la frecuencia de los terminos en los documentos
-    def create_matrix_term_document(self, binary ):
-        term_vector = []
-        m_term_doc = []
-
-        if binary:
-            for term in self.terms:
-                for doc in self.collection:
-                    if term in doc:#doc.body
-                        term_vector.append(1)
-                    else:
-                        term_vector.append(0)
-                m_term_doc.append(term_vector.copy())
-                term_vector.clear()
-
-        #usar la matriz term-doc de frequencia por defecto
-        else:
-            for term in self.terms:
-                for index, doc in enumerate(self.collection):
-                    #term_vector.append(len(re.findall(term,doc.body.lower())))
-                    term_vector.append( len(re.findall(term,doc.lower())))
-
-                m_term_doc.append(term_vector.copy())
-                term_vector.clear()
+    def search(self, query, collection, indexed_terms_name, max_freq_name):
         
-        return m_term_doc
+        k=200
+        indexed_terms = self._load(indexed_terms_name)
+        max_freq = self._load(max_freq_name)
+        tf_matrix = self._create_tf_matrix(indexed_terms, max_freq)
+        idf_matrix = self._create_idf_matrix(indexed_terms, len(max_freq))
+        term_document_matrix = self._create_tf_idf_matrix(tf_matrix, idf_matrix)
+        U,S,Vt = svds(term_document_matrix,k)
+        query_vector = self._process_query(query, indexed_terms, idf_matrix, 0.5)
+        query_k = self.__query_low_rank_approx(query_vector,U,S)
+        relevant_documents = self._similarity(term_document_matrix, query_vector)
 
-    #Si se quiere calcular la similitud de la matriz de los pesos esta se crea
-    def is_tf_idf(self, tfidf):
-        if tfidf:
-                self.__calculate_tf()
-                self.__calculate_idf(len(self.collection)) # mandar el total de documentos
-                self.__calculate_tf_idf()
-                m_term_doc = self.tf_idf.copy()
+        return collection.retrieve_documents(relevant_documents)
 
-    #serializacion de las matrices
-    def save_matrix(self, binary = False, tfidf=False):
-        if binary:
-            with open("binary_matrix","wb") as binary_file: # wb = escritura binaria
-                pickle.dump(self.matrix_term_doc, binary_file)
-        elif tfidf:
-            with open("tfidf_matrix","wb") as tfidf_file:
-                pickle.dump(self.matrix_term_doc, tfidf_file)
-        else:
-            with open("frequency_matrix","wb") as freq_file: 
-                pickle.dump(self.matrix_term_doc, freq_file)
-
-    # deserializacion de las matrices
-    def get_matrix(self, binary = False, tfidf=False):
-        result = []
-        if binary:
-            with open("binary_matrix","rb") as binary_file: # rb = lectura binaria
-                result = pickle.load(binary_file)
-        elif tfidf:
-            with open("tfidf_matrix","rb") as tfidf_file: 
-                result = pickle.load(tfidf_file)
-        else:
-            with open("frequency_matrix","rb") as freq_file: 
-                result = pickle.load(freq_file)
-        return result
-
-    #el doble guion bajo al principio indica q son metodos privados
-    def __calculate_tf(self):
-        tf_vector = []
-        max_freq = self.__select_max() 
-        for doc_vector in self.matrix_term_doc:
-            for i, freq_d in enumerate(doc_vector):
-                value = freq_d / float(max_freq[i])
-                value = np.round(value, 4)
-                tf_vector.append(value)
-            self.tf_ij.append( tf_vector.copy())
-            tf_vector.clear()
-       
-    #calcula el termino de mayor frecuencia por documento
-    def __select_max(self):
-        result = [] #len(result) = cantidad de documentos
-        for doc_vector in self.matrix_term_doc:
-            if len(result) == 0: result = doc_vector.copy()
-            else:
-                for i in range(len(doc_vector)):
-                    if result[i] < doc_vector[i]:
-                        result[i] = doc_vector[i]
-        return result
-
-    # N:la cantidad total de documentos en la coleccion
-    # devuelve un dict de term: value= [idf_i, n]
-    # donde n es la cantidad de veces q aparece el term i en el total de documentos
-    def __calculate_idf(self, N):
-        idf_vector=[]
-        n_i = 0
+                
         
-        for doc_vector in self.matrix_term_doc:
-            for d in doc_vector:
-                if d > 0:
-                    n_i += 1
-            idf = math.log( N / float( n_i),10)
-            idf = np.round(idf, 4)
-            idf_vector.append(idf)
-            idf_vector.append(n_i)
-            self.idf_i.append( idf_vector.copy())
-            idf_vector.clear()
-            n_i = 0
-        
-
-    def __calculate_tf_idf(self):
-        tfidf_vector = []
-        
-        for index, doc_vector in enumerate(self.tf_ij):
-            idf_value = self.idf_i[index][0] #tomar el idf correspondiente al termino i
-            for d in doc_vector:
-                n = idf_value * d
-                tfidf_vector.append(n)
-            self.tf_idf.append(tfidf_vector.copy())
-            tfidf_vector.clear()
-        self.matrix_term_doc = self.tf_idf.copy()
-    
-    #crear el vector consulta con las frecuencias q tiene en cada documento
-    def get_query_vector(self):
-        query_vector = []
-        for term in self.terms:
-            freq = len(re.findall(term, self.query.lower()))
-            query_vector.append(freq)
-        return query_vector
-        
-    #A es la matriz a la q se le va a aplicar el SVD
-    def get_svd(self):
-        U, S, VT = np.linalg.svd(self.matrix_term_doc)
-        U = np.round(U,4) #redondea hasta 4 valores despues de la coma
-        S = np.round(S,4)
-        S = np.diag(S)
-        VT = np.round(VT,4)
-
-        k = self.__dimension_reduction()
-        #reducir la dimension de las matrices 
-        rows = len(self.matrix_term_doc)
-        columns = len(self.matrix_term_doc[0])
-        U2 = U[ : rows, : k]
-        S2 = S[0 : k]
-        VT2 = VT[ : k, : columns]
-
-        return U2, S2, VT2
-
-    #devuelve el valor k<r, q representa la nueva dimension de las matrices
-    #k:cantidad de conceptos < r total de documentos
-    def __dimension_reduction(self):
-        k = [100, 200, 300]
-        r = random.randint(0, 2)
-        return k[r] # k = entre 100 y 300
-
     #reducir la dimesion del vector consuta 
-    def __query_dimension_reduction(self, U, S):
-        query_vector_2 = np.dot(np.dot(np.linalg.inv(S),U.transpose()),self.query_vector)
-        query_vector_2 = np.round(query_vector_2,4)
-        return query_vector_2
+    def __query_low_rank_approx(self,query_vector, U, S):
 
+        return np.dot(np.dot(np.linalg.inv(S),U.transpose()),query_vector)
+        
+        
     #Calcular la similitud de term-doc
     # para cuantificar la similitud entre un vector consulta y un vector documento
     # solo necesitamos verificar los vectores propios en la matriz VT.
@@ -214,9 +59,9 @@ class LSI(Vectorial): #IRM
         return result
 
 
-collections = ["leon leon leon", "leon leon leon zorro", "leon zorro nutria","leon leon leon zorro zorro zorro", "nutria"]
-query = "nutria"
-terms = ["leon","zorro","nutria"]
-lsi = LSI(collections,terms,query,False,True)
-ranking = lsi.calculate_ranking()
-print(ranking)
+#collections = ["leon leon leon", "leon leon leon zorro", "leon zorro nutria","leon leon leon zorro zorro zorro", "nutria"]
+#query = "nutria"
+#terms = ["leon","zorro","nutria"]
+#lsi = LSI(collections,terms,query,False,True)
+#ranking = lsi.calculate_ranking()
+#print(ranking)
