@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row row-cols-auto" style="margin-top: 20pt;">
+      <div class="col">
+        <img src="{% static 'images/H5.png' %}" alt="hedwig2" width="150pt">
+      </div>
+
+      <div class="col-md-8">
+        <form class="needs-validation" novalidate method="POST" action=""> 
+          {% csrf_token %} 
+          
+            
+          
+          <div class="row g-0 text-center">
+              <div class="col-sm-6 col-md-8">
+                <div class="input-group mb-3">
+                  <input class="form-control form-control-lg" type="text" placeholder="Search" aria-label=".form-control-md example" name="query" style="border-color: rgb(139,69,19); ">                   
+                  <button class="btn btn btn-outline-light" type="submit" id="button-search" style="color: rgb(218,165,32); border-color: rgb(139,69,19);" ><i class="fa fa-search"></i></button> 
+                </div>
+              </div>
+              <div class="col-6 col-md-1">
+                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#exampleModal"  style="color:rgb(218,165,32); ">Options</button>                                           
+              </div>
+          </div>
+          
+
+          
+          <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="exampleModalLabel">OPTIONS</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form>
+                    <h3>Choose Collection:</h3>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault1" value="cranfield" style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);" checked>
+                      <label class="form-check-label" for="flexRadioDefault1">
+                        Cranfield
+                      </label>
+                    </div>
+                                        
+    
+                    <h3>Choose IRM:</h3>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault4" value="boolean" checked style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);">
+                      <label class="form-check-label" for="flexRadioDefault4">
+                        Boolean
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault5" value="vectorial" style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);">
+                      <label class="form-check-label" for="flexRadioDefault5">
+                        Vectorial
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="irm" id="flexRadioDefault6" value="lsi" style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);">
+                      <label class="form-check-label" for="flexRadioDefault6">
+                        LSI
+                      </label>
+                    </div>
+                  </form>
+                </div>
+                  
+                <div class="modal-footer">
+                  <button class="btn btn btn-outline-light" type="button" id="button-save" style="color: rgb(218,165,32); border-color: rgb(218,165,32);" data-bs-dismiss="modal">SAVE</button>                                                               
+                           
+                </div>
+              </div>
+            </div>
+          </div>     
+       
+        </form>
+      </div>
+    </div> 
+
+    <hr style="color: rgb(103, 48, 8); ">
+
+    <div class="container text-center">
+      <div class="col text-muted fst-italic" style="margin-top: 10pt;margin-bottom: 30pt;">
+        <p style="color: rgb(139,69,19);">{{length}} documents were retrieved.</p>
+      </div>      
+    </div>   
+    
+         
+    <div class="list-group" style="color: blue;">
+      {%for document in documents %}
+        <a href="{% url 'document' id=document.id %}" class="list-group-item list-group-item-action">
+          <small class="fst-italic text-muted opacity-50">{{document.score}}</small>
+          <div class="d-flex w-100 justify-content-between ">
+              <p class="mb-1 fw-semibold" style="color: rgb(196, 151, 38);">{{document.title}}</p>
+            <small style="color: rgb(139,69,19);">{{document.id}}</small>
+          </div>
+          <p style="color: rgb(139,69,19);">{{document.author}}</p>
+          
+                    
+        </a>
+      {% endfor %}
+        
+    </div>
+  </div>
+  {% endblock %}   

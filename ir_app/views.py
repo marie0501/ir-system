@@ -5,27 +5,45 @@ import pickle
 
 # Create your views here.
 def index(request):
-
+    
     if request.method == 'POST':
         query = request.POST['query']
         collection = request.POST.get('collection')  
         irm = request.POST.get('irm')
-
-        retrieved_documents_file = main.retrieve(query,collection,irm)        
+        main.retrieve(query,collection,irm)        
         
-        return redirect('results', documents_file=retrieved_documents_file)        
+        return redirect('results')        
 
     return render(request,'index.html')
 
-def results(request, documents_file):
-
+def results(request):
+    
     if request.method == 'POST':
         query = request.POST['query']
         collection = request.POST.get('collection')  
         irm = request.POST.get('irm')
-        documents_file = main.retrieve(query,collection,irm) 
-
-    with open(documents_file,'rb') as f:
+        main.retrieve(query,collection,irm) 
+        
+    with open('retrieved_documents','rb') as f:
         documents = pickle.load(f)
+    
+           
+    return render(request, 'results.html',{'documents':documents, 'length':len(documents)})
 
-    return render(request, 'results.html',{'documents':documents})
+def document(request, id):    
+    
+    with open('retrieved_documents','rb') as f:
+        documents = pickle.load(f)
+    
+    selected_doc = None
+    for doc in documents:
+        if doc.id == id:
+            selected_doc = doc
+            break
+        
+    
+    return render(request,'document.html',{'document':selected_doc})
+
+    
+    
+    

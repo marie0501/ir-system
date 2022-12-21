@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<hr style="margin-top: 40pt; color: rgb(103, 48, 8);">
+<div class="container-fluid">
+  <p class=" fs-4" style="color: rgb(171, 133, 38);"><b style="color: rgb(218,165,32);">Title:</b> {{ document.title }}</p>
+  <p class="fs-4" style="color: rgb(171, 133, 38);"><b style="color: rgb(218,165,32);">Author:</b> {{ document.author }}</p>
+  <hr style="color: rgb(103, 48, 8); ">
+  <p class="fst-italic fs-5" style="color: rgb(139,69,19);"> {{ document.body }} </p>
+</div>
+{% endblock %}
+
