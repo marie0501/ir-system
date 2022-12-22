@@ -21,7 +21,7 @@ class Boolean(IRM):
             tokenized_query = self.__tokenize_query(query)
             query_vector = self.__process_query(tokenized_query,indexed_terms,collection.number_of_documents())              
         retrieved_documents_similarity = self.__get_relevant_documents(np.delete(query_vector, len(query_vector)-1))       
-
+        print(query_vector)
         self._save(retrieved_documents_similarity,self.name + '_retrieved_documents_similarity') 
 
         return collection.retrieve_documents(retrieved_documents_similarity)      
