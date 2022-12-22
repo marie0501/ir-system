@@ -23,7 +23,7 @@ class LSI(Vectorial):
 
         self._save(retrieved_documents_similarity,self.name + '_retrieved_documents_similarity')
 
-        return collection.retrieve_documents(retrieved_documents_similarity)
+        return collection.retrieve_documents(retrieved_documents_similarity, self.name)
 
     def __low_rank_approximation(self, term_document_matrix, collection , k):
         

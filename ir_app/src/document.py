@@ -10,4 +10,4 @@ class Document:
 
     
     def __repr__(self):
-        return f"ID: {self.id}\n"
+        return f"ID: {self.id} Title: {self.title} Author: {self.author}"

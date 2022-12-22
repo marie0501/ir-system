@@ -47,7 +47,7 @@
                       </label>
                     </div>
                     <div class="form-check">
-                      <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault1" value="cranfield" style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);">
+                      <input class="form-check-input" type="radio" name="collection" id="flexRadioDefault1" value="scifact" style="border-color:rgb(218,165,32) ; background-color: rgb(218,165,32);">
                       <label class="form-check-label" for="flexRadioDefault1">
                         Scifact
                       </label>
@@ -99,6 +99,7 @@
          
     <div class="list-group" style="color: blue;">
       {%for document in documents %}
+      
         <a href="{% url 'document' id=document.id %}" class="list-group-item list-group-item-action">
           <small class="fst-italic text-muted opacity-50">{{document.score}}</small>
           <div class="d-flex w-100 justify-content-between ">

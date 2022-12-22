@@ -20,7 +20,7 @@ class Tester:
         for key in keys:
             query = querys[key]
             self.model.search(query, self.collection)
-            relevant_documents_model = set((self.collection.load(self.model.name + '_retrieved_documents_similarity')).keys())
+            relevant_documents_model = set(self.collection.load(f'{self.collection.name}\\{self.collection.name}_{self.model.name}_relevant_documents_ids'))
             relevant_documents_query = set(relevant_documents.get(key))
 
             if method == 'recall': 
@@ -39,18 +39,21 @@ class Tester:
     def plot(self,method='precision'):
 
         result = self.collection.load(self.collection.name + '\\' + self. collection.name + '_' + self.model.name + '_' + method)
-
+        m = 'recobrado'
+        if method == 'precision':
+            m='precisión'
+    
         x = list(result.keys())
         y = []
 
         for i in x:
             y.append(result[i])
             
-        plt.plot(x,y, label = self.model.name + ' model')
+        plt.scatter(x,y, label='modelo ' + self.model.name, c='g')
         
-        plt.title(method.capitalize(), loc = 'left')
-        plt.xlabel('querys id')
-        plt.ylabel(method)
+        plt.title(m.capitalize(), loc = 'left')
+        plt.xlabel('consultas')
+        plt.ylabel(m)
         
         plt.legend()
         plt.show()

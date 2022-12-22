@@ -24,7 +24,7 @@ class Vectorial(IRM, ABC):
 
         self._save(retrieved_documents_similarity,self.name + '_retrieved_documents_similarity')
 
-        return collection.retrieve_documents(retrieved_documents_similarity)
+        return collection.retrieve_documents(retrieved_documents_similarity,self.name)
 
     def _get_matrix(self, collection):
 

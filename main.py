@@ -27,3 +27,6 @@ def retrieve(user_query, user_collection, user_model):
     with open(file_name,'wb') as f:
         pickle.dump(docs, f, protocol=pickle.HIGHEST_PROTOCOL)
       
+
+
+

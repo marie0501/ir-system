@@ -17,14 +17,14 @@ class Boolean(IRM):
         indexed_terms = self._load(collection.name + '\\' + collection.name + '_indexed_terms')         
         tokenized_logical_query = self.__tokenize_logical_query(query)
         query_vector = self.__process_query(tokenized_logical_query, indexed_terms, collection.number_of_documents())   
-        if query_vector == None:
+        if len(query_vector) < 1:
             tokenized_query = self.__tokenize_query(query)
             query_vector = self.__process_query(tokenized_query,indexed_terms,collection.number_of_documents())              
-        retrieved_documents_similarity = self.__get_relevant_documents(np.delete(query_vector, len(query_vector)-1))       
-        print(query_vector)
+        retrieved_documents_similarity = self.__get_relevant_documents(query_vector)       
+        
         self._save(retrieved_documents_similarity,self.name + '_retrieved_documents_similarity') 
 
-        return collection.retrieve_documents(retrieved_documents_similarity)      
+        return collection.retrieve_documents(retrieved_documents_similarity, self.name)      
 
     def __tokenize_query(self, query):
 
@@ -32,8 +32,6 @@ class Boolean(IRM):
 
         for i in range(1,(2*len(tokenized_query))-1,2):
             tokenized_query.insert(i,'or')
-
-        print(tokenized_query)
 
         return tokenized_query   
 
@@ -51,7 +49,7 @@ class Boolean(IRM):
         while i - inserted_ands < n-1:
 
             if tokenized_query[i] not in symbols_set and tokenized_query[i+1] not in symbols_set:
-                tokenized_query.insert(i+1,'and')
+                tokenized_query.insert(i+1,'or')
                 inserted_ands+=1
             i+=1                
 
@@ -90,7 +88,7 @@ class Boolean(IRM):
     def __op_not(self,x):
         vector_result=[]        
         for i in range(len(x)):
-                    if i > 0:
+                    if x[i] > 0:
                         vector_result.append(0)
                     else:
                         vector_result.append(1)
@@ -125,12 +123,12 @@ class Boolean(IRM):
 
                 elif tokens[i] not in set(operators.keys()) and tokens[i]!=')':
 
-                    term_vector = ''
+                    term_vector = None
                     try:
-                        term_vector = indexed_terms[tokens[i]]
+                        term_vector = np.delete(indexed_terms[tokens[i]],number_of_documents)
                     except:
                         term_vector=[0 for i in range(number_of_documents)]
-                
+                    
                     values.append(term_vector)
 
                 # Closing brace encountered,
@@ -198,12 +196,11 @@ class Boolean(IRM):
 
         except Exception as ex:
             print(ex)
-            return None
+            return []
 
     def __get_relevant_documents(self, query_vector):
     
         retrieved_documents = {}
-        print(len(query_vector))
         for i in range(len(query_vector)):
             if query_vector[i] > 0:
                 retrieved_documents.update({i:1})

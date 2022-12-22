@@ -170,14 +170,17 @@ class Cranfield(Collection):
         self.save(relevant_documents,'cranfield\\cranfield_relevant_documents')
 
 
-    def retrieve_documents(self, relevant_documents):
+    def retrieve_documents(self, relevant_documents, model):
         
         documents = self.load('cranfield\\cranfield_documents')
         retrieved_documents = []
+        ids = []
         for key in relevant_documents.keys():
             documents[key+1].score = relevant_documents[key]
-            retrieved_documents.append(documents[key+1])                
+            retrieved_documents.append(documents[key+1])  
+            ids.append(key+1)
 
+        self.save(ids,'cranfield\\cranfield_'+ model + '_relevant_documents_ids')
         return  retrieved_documents
 
     def number_of_documents(self):
@@ -211,11 +214,11 @@ class Scifact(Collection):
             for i in range(2000):
                 document = re.findall(r'".*?": ".*?"', data_docs[i])
 
-                id = document[0].split(':')[1].removeprefix('"').removesuffix('"')
-                title = document[1].split(':')[1].removeprefix('"').removesuffix('"')
-                text = document[2].split(':')[1].removeprefix('"').removesuffix('"')
+                id = int(document[0].split(':')[1].replace('"',''))
+                title = document[1].split(':')[1].replace('"','')
+                text = document[2].split(':')[1].replace('"','')
 
-                documents.update({id:Document(id,title,"","",text)})
+                documents.update({i:Document(id,title,"","",text)})
                 current_text = self._remove_stopwords(word_tokenize(re.sub(r'[^\w\s]', ' ', text)))
                 for term in current_text:                                  
                     vector = indexed_terms.get(term)
@@ -260,15 +263,19 @@ class Scifact(Collection):
         self.save(querys, 'scifact\\scifact_querys')
 
       
-    def parse_relevant_documents(self, file_name):
+    def parse_relevant_documents(self, file_name1, file_name2):
         
         querys = self.load('scifact\\scifact_querys')
         document_parsed = self.load('scifact\\scifact_documents')
-        path = self.directory + '\\' + file_name
-        
+        path1 = self.directory + '\\' + file_name1
+        path2 = self.directory + '\\' + file_name2
+        ids = []
         relevant_documents = {}
 
-        with open(path ,'r') as f: 
+        for key in document_parsed.keys():
+            ids.append(document_parsed[key].id)
+
+        with open(path1 ,'r') as f: 
             f.readline()           
             while True:
                 line = f.readline().split()
@@ -277,21 +284,42 @@ class Scifact(Collection):
                 
                 else:                    
                     query_index = int(line[0])
-                    relevant_document_id = int(line[1])                    
-                    if not query_index in set(relevant_documents.keys()):
-                        relevant_documents.update({query_index:set()})
-                    relevant_documents.get(query_index).add(relevant_document_id)
+                    relevant_document_id = int(line[1])          
+                    if relevant_document_id in ids and query_index in querys.keys():          
+                        if not query_index in set(relevant_documents.keys()):
+                            relevant_documents.update({query_index:[]})
+                        relevant_documents.get(query_index).append(relevant_document_id)
 
-                        
-                  
-
+        with open(path2 ,'r') as f: 
+            f.readline()           
+            while True:
+                line = f.readline().split()
+                if not line:                    
+                    break
+                
+                else:                    
+                    query_index = int(line[0])
+                    relevant_document_id = int(line[1])          
+                    if relevant_document_id in ids and query_index in querys.keys():          
+                        if not query_index in set(relevant_documents.keys()):
+                            relevant_documents.update({query_index:[]})
+                        relevant_documents.get(query_index).append(relevant_document_id)
+             
         self.save(relevant_documents, 'scifact\\scifact_relevant_documents')
 
 
+    def retrieve_documents(self, relevant_documents, model):
+        documents = self.load('scifact\\scifact_documents')
+        retrieved_documents = []
+        ids = []
 
+        for key in relevant_documents.keys():
+            documents[key].score = relevant_documents[key]
+            retrieved_documents.append(documents[key])
+            ids.append(documents[key].id)
 
-    def retrieve_documents(self, documents):
-        return super().retrieve_documents(documents)
+        self.save(ids,'scifact\\scifact_'+ model + '_relevant_documents_ids')
+        return  retrieved_documents
 
     def number_of_documents(self):
         return 2000 
